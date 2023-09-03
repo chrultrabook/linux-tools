@@ -12,7 +12,6 @@ cd ~/Desktop/debug-logs
 # Download cbmem and mark it as executable
 wget https://mrchromebox.tech/files/util/cbmem.tar.gz
 tar -xf cbmem.tar.gz;rm cbmem.tar.gz;chmod +x cbmem
-chmod +x cbmem
 
 # Grab logs necessary for debugging audio
 if [ ! -z '$(pgrep pulseaudio)' ]
