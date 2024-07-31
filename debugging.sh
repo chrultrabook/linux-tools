@@ -1,35 +1,47 @@
 #!/usr/bin/env bash
-
 printf 'Welcome.\nThis script will ask you for sudo password, which is necessary to extract required information.\n'
 
 # Get current username before escalating permissions
 user=$USER
 
+# Get board name
+board="$(cat /sys/class/dmi/id/product_name)"
+
+# Get current date and time
+date="$(date +"%Y-%m-%d_%Hh%Mm")"
+
+# Specify where to store logs
+logdir="debug-logs-$board-$date"
+logarchive="debug-logs-$board-$date.tar.gz"
+
 # Create directory to store logs
-mkdir -p ~/Desktop/debug-logs/
-cd ~/Desktop/debug-logs
+mkdir -p $logdir
+cd $logdir
 
 # Download cbmem and mark it as executable
-wget https://mrchromebox.tech/files/util/cbmem.tar.gz
-tar -xf cbmem.tar.gz;rm cbmem.tar.gz;chmod +x cbmem
+wget https://mrchromebox.tech/files/util/cbmem.tar.gz &> /dev/null
+tar -xf cbmem.tar.gz
+rm cbmem.tar.gz
+chmod +x cbmem
 
 # Grab logs necessary for debugging audio
 if [ ! -z '$(pgrep pulseaudio)' ]
 then
-	systemctl --user stop pipewire.socket
-	systemctl --user stop pipewire.service
+	# Get logs from pipewire
+	systemctl --user stop pipewire.{socket,service}
+	systemctl --user stop pipewire-pulse.{socket,service}
 
 	for card in $(grep '\[' /proc/asound/cards | awk '{print $1}')
-do
-	echo "Pipewire card $card log:" >> audio-debug.log
-	spa-acp-tool -c $card -vvvv info &>> audio-debug.log
+	do
+		echo "Pipewire card $card log:" >> audio-debug.log
+		spa-acp-tool -c $card -vvvv info &>> audio-debug.log
+	done
 
-	systemctl --user start pipewire.socket
 	systemctl --user start pipewire.service
-    done
+	systemctl --user start pipewire-pulse.service
 else
-	systemctl --user stop pulseaudio.socket
-	systemctl --user stop pulseaudio.service
+	# Get logs from pulseaudio
+	systemctl --user stop pulseaudio.{socket,service}
 
 	echo "Pulseaudio log:" >> audio-debug.log
 	pulseaudio -v &>> audio-debug.log & sleep 5
@@ -39,30 +51,34 @@ else
 fi
 
 # Priviledge escalation [!!!]
+{
 sudo su <<EOF
 
 # Grab logs and redirect output to files instead of stdout
 dmesg >> dmesg.log
 
-if [ ! -f /sbin/lspci ]
+if [ -z "$(which lspci)" ]
 then
 	printf 'lspci not found. Please install pciutils.\n'
+	touch no-lspci
 else
 	lspci -vvvnn >> lspci.log
 fi
 
-if [ ! -f /bin/lsusb ]
+if [ -z "$(which lsusb)" ]
 then 
 	printf 'lsusb not found. Please install usbutils.\n'
+	touch no-lsusb
 else
 	lsusb -v >> lsusb.log
 fi
 
-if [ ! -f /sbin/dmidecode ]
+if [ -z "$(which dmidecode)" ]
 then
 	printf 'Dmidecode not found. Please install it.\n'
+	touch no-dmidecode
 else
-	dmidecode > dmidecode.log
+	dmidecode >> dmidecode.log
 fi
 
 ## Copy ACPI tables
@@ -70,19 +86,26 @@ mkdir acpi
 cp /sys/firmware/acpi/tables/DSDT ./acpi/
 cp /sys/firmware/acpi/tables/SSDT* ./acpi/
 
-# Grab coreboot logs and remove binary as it's no longer needed
+# Grab coreboot logs
 ./cbmem -c > cbmem.log
-rm cbmem
 
 # Set file permissions for regular user
 chown -R $user:$user *
 chmod -R 755 *
 
 EOF
+} || {
+	echo "Error: Unable to gain root permission. Log archive will be incomplete!"
+	touch no-root
+}
+
+
+# Remove cbmem binary
+rm cbmem
 
 # Pack logs into archive and remove temporary folder that stores them
 cd ..
-tar -czf debug-logs.tar.gz debug-logs
-rm -r debug-logs
+tar -caf "$logarchive" "$logdir"
+rm -r "$logdir"
 
-printf 'Log collection done.\nPlease upload "debug-logs.tar.gz" for analysis.\n'
+printf "Log collection done.\nPlease upload ${logarchive} for analysis.\n"
