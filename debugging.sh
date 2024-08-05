@@ -50,6 +50,31 @@ else
 	systemctl --user start pulseaudio.service
 fi
 
+# UCM logs
+skip_ucm=0
+
+if [ -z "$(which alsaucm)" ]
+then
+        printf 'alsaucm not found. Please install alsa-utils.\n'
+	touch no-alsautils
+        skip_ucm=1
+fi
+if [ -z "$(which strace)" ]
+then
+        printf 'strace not found. Please install strace.\n'
+	touch no-strace
+        skip_ucm=1    
+fi
+
+if [ "$skip_ucm" = "0" ]
+then
+	for card in $(grep '\[' /proc/asound/cards | awk '{print $1}')
+        do
+                echo "Alsa card $card UCM log:" >> alsa-ucm.log
+                strace alsaucm -c$card reload &>> alsa-ucm.log
+        done
+fi
+
 # Priviledge escalation [!!!]
 {
 sudo su <<EOF
