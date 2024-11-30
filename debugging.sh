@@ -75,6 +75,9 @@ then
         done
 fi
 
+lsmod > loaded-modules.log
+find /lib/firmware > firmware.log
+
 # Priviledge escalation [!!!]
 {
 sudo su <<EOF
