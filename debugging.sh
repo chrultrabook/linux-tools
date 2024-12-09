@@ -109,6 +109,14 @@ else
 	dmidecode >> dmidecode.log
 fi
 
+if [ -z "$(which libinput)" ]
+then
+    printf 'libinput not found. Please install it.\n'
+    touch no-libinput
+else
+    libinput list-devices >> libinput.log
+fi
+
 ## Copy ACPI tables
 mkdir acpi
 cp /sys/firmware/acpi/tables/DSDT ./acpi/
