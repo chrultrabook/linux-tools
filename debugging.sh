@@ -71,7 +71,7 @@ then
 	for card in $(grep '\[' /proc/asound/cards | awk '{print $1}')
         do
                 echo "Alsa card $card UCM log:" >> alsa-ucm.log
-                strace alsaucm -c$card reload &>> alsa-ucm.log
+                strace alsaucm -c hw:$card reload &>> alsa-ucm.log
         done
 fi
 
@@ -111,7 +111,7 @@ fi
 
 if [ -z "$(which libinput)" ]
 then
-    printf 'libinput not found. Please install it.\n'
+    printf 'libinput not found. Please install libinput utils.\n'
     touch no-libinput
 else
     libinput list-devices >> libinput.log
