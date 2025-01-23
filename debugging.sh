@@ -31,6 +31,12 @@ then
 	systemctl --user stop pipewire.{socket,service}
 	systemctl --user stop pipewire-pulse.{socket,service}
 
+	if [ -z "$(which spa-acp-tool)" ]
+	then
+		printf 'spa-acp-tool not found. On distros using apt, install pipewire-bin\n'
+		touch no-spaacptool
+	fi
+
 	for card in $(grep '\[' /proc/asound/cards | awk '{print $1}')
 	do
 		echo "Pipewire card $card log:" >> audio-debug.log
