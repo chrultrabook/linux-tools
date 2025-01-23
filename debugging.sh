@@ -55,24 +55,24 @@ skip_ucm=0
 
 if [ -z "$(which alsaucm)" ]
 then
-        printf 'alsaucm not found. Please install alsa-utils.\n'
+	printf 'alsaucm not found. Please install alsa-utils.\n'
 	touch no-alsautils
-        skip_ucm=1
+	skip_ucm=1
 fi
 if [ -z "$(which strace)" ]
 then
-        printf 'strace not found. Please install strace.\n'
+	printf 'strace not found. Please install strace.\n'
 	touch no-strace
-        skip_ucm=1    
+	skip_ucm=1    
 fi
 
 if [ "$skip_ucm" = "0" ]
 then
 	for card in $(grep '\[' /proc/asound/cards | awk '{print $1}')
-        do
-                echo "Alsa card $card UCM log:" >> alsa-ucm.log
-                strace alsaucm -c hw:$card reload &>> alsa-ucm.log
-        done
+	do
+		echo "Alsa card $card UCM log:" >> alsa-ucm.log
+		strace alsaucm -c hw:$card reload &>> alsa-ucm.log
+	done
 fi
 
 lsmod > loaded-modules.log
@@ -80,7 +80,7 @@ find /lib/firmware > firmware.log
 
 # Priviledge escalation [!!!]
 {
-sudo su <<EOF
+	sudo su <<EOF
 
 # Grab logs and redirect output to files instead of stdout
 dmesg >> dmesg.log
@@ -111,10 +111,10 @@ fi
 
 if [ -z "$(which libinput)" ]
 then
-    printf 'libinput not found. Please install libinput utils.\n'
-    touch no-libinput
+	printf 'libinput not found. Please install libinput utils.\n'
+	touch no-libinput
 else
-    libinput list-devices >> libinput.log
+	libinput list-devices >> libinput.log
 fi
 
 ## Copy ACPI tables
