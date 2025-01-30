@@ -84,6 +84,12 @@ fi
 lsmod > loaded-modules.log
 find /lib/firmware > firmware.log
 
+# grab journal on systemd distros
+if [ ! -z "$(which journalctl)" ]
+then
+	journalctl -b 0 > journal.log
+fi
+
 # Priviledge escalation [!!!]
 {
 	sudo su <<EOF
