@@ -90,6 +90,9 @@ then
 	journalctl -b 0 > journal.log
 fi
 
+# grab a copy of /etc/os-release
+cd /etc/os-release .
+
 # Priviledge escalation [!!!]
 {
 	sudo su <<EOF
