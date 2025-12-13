@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -eu
 printf 'Welcome.\nThis script will ask you for sudo password, which is necessary to extract required information.\n'
 
 # Get current username before escalating permissions
