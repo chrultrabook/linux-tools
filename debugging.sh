@@ -25,13 +25,13 @@ rm cbmem.tar.gz
 chmod +x cbmem
 
 # Grab logs necessary for debugging audio
-if [ ! -z '$(pgrep pulseaudio)' ]
+if command -v wireplumber &>/dev/null
 then
 	# Get logs from pipewire
 	systemctl --user stop pipewire.{socket,service}
 	systemctl --user stop pipewire-pulse.{socket,service}
 
-	if [ -z "$(which spa-acp-tool)" ]
+	if ! command -v spa-acp-tool &>/dev/null
 	then
 		printf 'spa-acp-tool not found. On distros using apt, install pipewire-bin\n'
 		touch no-spaacptool
