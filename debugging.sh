@@ -91,7 +91,7 @@ then
 fi
 
 # grab a copy of /etc/os-release
-cd /etc/os-release .
+cp /etc/os-release .
 
 # Priviledge escalation [!!!]
 {
